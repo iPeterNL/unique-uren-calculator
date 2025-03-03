@@ -1,66 +1,95 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#007bff">
-    <link rel="manifest" href="manifest.json">
     <title>Unique Uren Calculator</title>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { border: 1px solid #ddd; padding: 8px; }
-        input { width: 80px; padding: 5px; text-align: center; }
-        button { padding: 10px; background: #007bff; color: white; border: none; cursor: pointer; }
+        input, select { width: 80px; padding: 5px; text-align: center; }
+        button { padding: 10px; margin: 5px; background: #007bff; color: white; border: none; cursor: pointer; }
+        .statisch input, .statisch select { border: none; background: transparent; pointer-events: none; }
     </style>
 </head>
 <body>
     <h1>Unique Uren Calculator</h1>
-    <table>
-        <tr>
-            <th>Dag</th> <th>Begin</th> <th>Eind</th> <th>Pauze</th> <th>Gewerkt</th>
-        </tr>
-        <script>
-            const dagen = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
-            dagen.forEach((dag, index) => {
-                document.write(`
-                    <tr>
-                        <td>${dag}</td>
-                        <td><input type="time" id="start${index}"></td>
-                        <td><input type="time" id="end${index}"></td>
-                        <td>
-                            <select id="pauze${index}">
-                                <option value="0">0 min</option>
-                                <option value="15">15 min</option>
-                                <option value="30">30 min</option>
-                            </select>
-                        </td>
-                        <td id="result${index}">0.00</td>
-                    </tr>
-                `);
-            });
-        </script>
-    </table>
-    <button onclick="berekenUren()">Bereken</button>
+    <div id="weken-container">
+        <div class="week">
+            <table>
+                <tr>
+                    <th>Dag</th> <th>Begin</th> <th>Eind</th> <th>Pauze</th> <th>Gewerkt</th>
+                </tr>
+                <script>
+                    function voegWeekToe() {
+                        const weekDiv = document.createElement("div");
+                        weekDiv.classList.add("week");
+                        weekDiv.innerHTML = `
+                            <table>
+                                <tr>
+                                    <th>Dag</th> <th>Begin</th> <th>Eind</th> <th>Pauze</th> <th>Gewerkt</th>
+                                </tr>
+                                ${["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"].map((dag, index) => `
+                                    <tr>
+                                        <td>${dag}</td>
+                                        <td><input type="time" class="start"></td>
+                                        <td><input type="time" class="end"></td>
+                                        <td>
+                                            <select class="pauze">
+                                                <option value="0">0 min</option>
+                                                <option value="15">15 min</option>
+                                                <option value="30">30 min</option>
+                                            </select>
+                                        </td>
+                                        <td class="result">0.00</td>
+                                    </tr>
+                                `).join("")}
+                            </table>
+                            <p><strong>Totaal gewerkte uren: <span class="week-totaal">0.00</span></strong></p>
+                            <button onclick="pasUrenAan(this)">Pas uren aan</button>
+                        `;
+                        document.getElementById("weken-container").appendChild(weekDiv);
+                    }
 
-    <script>
-        function berekenUren() {
-            for (let i = 0; i < 7; i++) {
-                let start = document.getElementById(`start${i}`).value;
-                let end = document.getElementById(`end${i}`).value;
-                let pauze = parseInt(document.getElementById(`pauze${i}`).value);
-                
-                if (start && end) {
-                    let startTime = new Date(`2023-01-01T${start}:00`);
-                    let endTime = new Date(`2023-01-01T${end}:00`);
-                    let uren = (endTime - startTime) / (1000 * 60 * 60) - (pauze / 60);
-                    document.getElementById(`result${i}`).innerText = uren.toFixed(2);
-                }
-            }
-        }
-    </script>
+                    function berekenUren() {
+                        document.querySelectorAll(".week").forEach(week => {
+                            let totaal = 0;
+                            week.querySelectorAll("tr").forEach(row => {
+                                const start = row.querySelector(".start")?.value;
+                                const end = row.querySelector(".end")?.value;
+                                const pauze = row.querySelector(".pauze") ? parseInt(row.querySelector(".pauze").value) : 0;
+                                if (start && end) {
+                                    let startTime = new Date(`2023-01-01T${start}:00`);
+                                    let endTime = new Date(`2023-01-01T${end}:00`);
+                                    let uren = (endTime - startTime) / (1000 * 60 * 60) - (pauze / 60);
+                                    row.querySelector(".result").innerText = uren.toFixed(2);
+                                    totaal += uren;
+                                }
+                            });
+                            week.querySelector(".week-totaal").innerText = totaal.toFixed(2);
+                            week.classList.add("statisch"); // Maak statisch
+                        });
+
+                        if (confirm("Wil je nog een extra week toevoegen?")) {
+                            voegWeekToe();
+                        }
+                    }
+
+                    function pasUrenAan(button) {
+                        const week = button.closest(".week");
+                        week.classList.remove("statisch");
+                    }
+
+                    document.addEventListener("DOMContentLoaded", () => {
+                        voegWeekToe(); // Eerste week standaard toevoegen
+                    });
+                </script>
+            </table>
+            <p><strong>Totaal gewerkte uren: <span class="week-totaal">0.00</span></strong></p>
+        </div>
+    </div>
+    <button onclick="berekenUren()">Bereken</button>
 </body>
 </html>

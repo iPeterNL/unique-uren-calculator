@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#007bff">
+    <link rel="manifest" href="manifest.json">
+    <title>Unique Uren Calculator</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; }
+        input { width: 80px; padding: 5px; text-align: center; }
+        button { padding: 10px; background: #007bff; color: white; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Unique Uren Calculator</h1>
+    <table>
+        <tr>
+            <th>Dag</th> <th>Begin</th> <th>Eind</th> <th>Pauze</th> <th>Gewerkt</th>
+        </tr>
+        <script>
+            const dagen = ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"];
+            dagen.forEach((dag, index) => {
+                document.write(`
+                    <tr>
+                        <td>${dag}</td>
+                        <td><input type="time" id="start${index}"></td>
+                        <td><input type="time" id="end${index}"></td>
+                        <td>
+                            <select id="pauze${index}">
+                                <option value="0">0 min</option>
+                                <option value="15">15 min</option>
+                                <option value="30">30 min</option>
+                            </select>
+                        </td>
+                        <td id="result${index}">0.00</td>
+                    </tr>
+                `);
+            });
+        </script>
+    </table>
+    <button onclick="berekenUren()">Bereken</button>
+
+    <script>
+        function berekenUren() {
+            for (let i = 0; i < 7; i++) {
+                let start = document.getElementById(`start${i}`).value;
+                let end = document.getElementById(`end${i}`).value;
+                let pauze = parseInt(document.getElementById(`pauze${i}`).value);
+                
+                if (start && end) {
+                    let startTime = new Date(`2023-01-01T${start}:00`);
+                    let endTime = new Date(`2023-01-01T${end}:00`);
+                    let uren = (endTime - startTime) / (1000 * 60 * 60) - (pauze / 60);
+                    document.getElementById(`result${i}`).innerText = uren.toFixed(2);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

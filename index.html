@@ -8,95 +8,85 @@
     <style>
         body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
         input, select { width: 80px; padding: 5px; text-align: center; }
         button { padding: 10px; margin: 5px; background: #007bff; color: white; border: none; cursor: pointer; }
-        .statisch input, .statisch select { border: none; background: transparent; pointer-events: none; }
+        .statisch td { border: none; background: transparent; }
+        .statisch input, .statisch select { display: none; }
+        .statisch .result { display: inline-block; }
     </style>
 </head>
 <body>
     <h1>Unique Uren Calculator</h1>
-    <div id="weken-container">
-        <div class="week">
-            <table>
-                <tr>
-                    <th>Dag</th> <th>Begin</th> <th>Eind</th> <th>Pauze</th> <th>Gewerkt</th>
-                </tr>
-                <script>
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/service-worker.js')
-    .then(() => console.log("Service Worker Registered"))
-    .catch(error => console.log("Service Worker Registration Failed", error));
-}
-                </script>
-                <script>
-                    function voegWeekToe() {
-                        const weekDiv = document.createElement("div");
-                        weekDiv.classList.add("week");
-                        weekDiv.innerHTML = `
-                            <table>
-                                <tr>
-                                    <th>Dag</th> <th>Begin</th> <th>Eind</th> <th>Pauze</th> <th>Gewerkt</th>
-                                </tr>
-                                ${["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"].map((dag, index) => `
-                                    <tr>
-                                        <td>${dag}</td>
-                                        <td><input type="time" class="start"></td>
-                                        <td><input type="time" class="end"></td>
-                                        <td>
-                                            <select class="pauze">
-                                                <option value="0">0 min</option>
-                                                <option value="15">15 min</option>
-                                                <option value="30">30 min</option>
-                                            </select>
-                                        </td>
-                                        <td class="result">0.00</td>
-                                    </tr>
-                                `).join("")}
-                            </table>
-                            <p><strong>Totaal gewerkte uren: <span class="week-totaal">0.00</span></strong></p>
-                            <button onclick="pasUrenAan(this)">Pas uren aan</button>
-                        `;
-                        document.getElementById("weken-container").appendChild(weekDiv);
-                    }
+    <div id="weken-container"></div>
+    <button onclick="voegWeekToe()">+ Voeg Week Toe</button>
 
-                    function berekenUren() {
-                        document.querySelectorAll(".week").forEach(week => {
-                            let totaal = 0;
-                            week.querySelectorAll("tr").forEach(row => {
-                                const start = row.querySelector(".start")?.value;
-                                const end = row.querySelector(".end")?.value;
-                                const pauze = row.querySelector(".pauze") ? parseInt(row.querySelector(".pauze").value) : 0;
-                                if (start && end) {
-                                    let startTime = new Date(`2023-01-01T${start}:00`);
-                                    let endTime = new Date(`2023-01-01T${end}:00`);
-                                    let uren = (endTime - startTime) / (1000 * 60 * 60) - (pauze / 60);
-                                    row.querySelector(".result").innerText = uren.toFixed(2);
-                                    totaal += uren;
-                                }
-                            });
-                            week.querySelector(".week-totaal").innerText = totaal.toFixed(2);
-                            week.classList.add("statisch"); // Maak statisch
-                        });
+    <script>
+        function voegWeekToe() {
+            const weekDiv = document.createElement("div");
+            weekDiv.classList.add("week");
+            weekDiv.innerHTML = `
+                <table>
+                    <tr>
+                        <th>Dag</th> <th>Begin</th> <th>Eind</th> <th>Pauze</th> <th>Gewerkt</th>
+                    </tr>
+                    ${["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"].map(dag => `
+                        <tr>
+                            <td>${dag}</td>
+                            <td><input type="time" class="start"></td>
+                            <td><input type="time" class="end"></td>
+                            <td>
+                                <select class="pauze">
+                                    <option value="0">0 min</option>
+                                    <option value="15">15 min</option>
+                                    <option value="30">30 min</option>
+                                </select>
+                            </td>
+                            <td><span class="result">0.00</span></td>
+                        </tr>
+                    `).join("")}
+                </table>
+                <p><strong>Totaal gewerkte uren: <span class="week-totaal">0.00</span></strong></p>
+                <button onclick="bewaarWeek(this)">BEWAAR</button>
+            `;
+            document.getElementById("weken-container").appendChild(weekDiv);
+        }
 
-                        if (confirm("Wil je nog een extra week toevoegen?")) {
-                            voegWeekToe();
-                        }
-                    }
+        function berekenUren(week) {
+            let totaal = 0;
+            week.querySelectorAll("tr").forEach(row => {
+                const start = row.querySelector(".start")?.value;
+                const end = row.querySelector(".end")?.value;
+                const pauze = row.querySelector(".pauze") ? parseInt(row.querySelector(".pauze").value) : 0;
+                if (start && end) {
+                    let startTime = new Date(`2023-01-01T${start}:00`);
+                    let endTime = new Date(`2023-01-01T${end}:00`);
+                    let uren = (endTime - startTime) / (1000 * 60 * 60) - (pauze / 60);
+                    row.querySelector(".result").innerText = uren.toFixed(2);
+                    totaal += uren;
+                }
+            });
+            week.querySelector(".week-totaal").innerText = totaal.toFixed(2);
+        }
 
-                    function pasUrenAan(button) {
-                        const week = button.closest(".week");
-                        week.classList.remove("statisch");
-                    }
+        function bewaarWeek(button) {
+            const week = button.closest(".week");
+            berekenUren(week);
+            week.classList.add("statisch");
+            button.innerText = "AANPASSEN";
+            button.setAttribute("onclick", "pasWeekAan(this)");
+        }
 
-                    document.addEventListener("DOMContentLoaded", () => {
-                        voegWeekToe(); // Eerste week standaard toevoegen
-                    });
-                </script>
-            </table>
-            <p><strong>Totaal gewerkte uren: <span class="week-totaal">0.00</span></strong></p>
-        </div>
-    </div>
-    <button onclick="berekenUren()">Bereken</button>
+        function pasWeekAan(button) {
+            const week = button.closest(".week");
+            week.classList.remove("statisch");
+            button.innerText = "BEWAAR";
+            button.setAttribute("onclick", "bewaarWeek(this)");
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            voegWeekToe();
+        });
+    </script>
 </body>
 </html>

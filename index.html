@@ -99,21 +99,35 @@
     </div>
 
     <script>
-        let weekNummer = 0;
+        function getWeeknummer(date) {
+            const d = new Date(date);
+            d.setHours(0, 0, 0, 0);
+            d.setDate(d.getDate() - (d.getDay() || 7) + 3);
+            const firstThursday = new Date(d.getFullYear(), 0, 4);
+            firstThursday.setDate(firstThursday.getDate() - (firstThursday.getDay() || 7) + 3);
+            const weekNum = Math.round(((d - firstThursday) / (7 * 24 * 60 * 60 * 1000)) + 1);
+            return `Week ${weekNum}, ${d.getFullYear()}`;
+        }
+
+        function updateWeeknummer(input) {
+            const weekDiv = input.closest(".week");
+            const weekTitle = weekDiv.querySelector(".week-title");
+            weekTitle.innerText = getWeeknummer(input.value);
+        }
 
         function voegWeekToe() {
-            weekNummer++;
             const weekDiv = document.createElement("div");
             weekDiv.classList.add("week");
             weekDiv.innerHTML = `
-                <h2>Week ${weekNummer}</h2>
+                <h2 class="week-title">Week ?</h2>
                 <table>
                     <tr>
-                        <th>Dag</th> <th>Begin</th> <th>Eind</th> <th>Pauze</th> <th>Gewerkt</th>
+                        <th>Dag</th> <th>Datum</th> <th>Begin</th> <th>Eind</th> <th>Pauze</th> <th>Gewerkt</th>
                     </tr>
-                    ${["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"].map(dag => `
+                    ${["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"].map((dag, index) => `
                         <tr>
                             <td>${dag}</td>
+                            <td><input type="date" class="datum" ${index === 0 ? 'onchange="updateWeeknummer(this)"' : ''}></td>
                             <td><input type="time" class="start"></td>
                             <td><input type="time" class="end"></td>
                             <td>

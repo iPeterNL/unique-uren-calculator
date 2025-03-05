@@ -88,5 +88,12 @@
             voegWeekToe();
         });
     </script>
+<script>
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/service-worker.js')
+    .then(() => console.log("Service Worker geregistreerd!"))
+    .catch(error => console.log("Service Worker registratie mislukt:", error));
+}
+</script>
 </body>
 </html>

@@ -6,6 +6,7 @@
     <meta name="theme-color" content="#007bff">
     <title>Unique Uren Calculator</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <style>
         /* Algemene stijlen */
         body {
@@ -38,6 +39,7 @@
             background: #ffffff;
             box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
             text-align: left;
+            position: relative;
         }
         .week h2 {
             margin-bottom: 10px;
@@ -103,6 +105,17 @@
             font-weight: bold;
             font-size: 16px;
         }
+        .delete-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #dc3545;
+            color: white;
+            padding: 5px 10px;
+            font-size: 12px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -114,24 +127,38 @@
     </div>
 
     <script>
-        function bewaarAlleWeken() {
+        function verwijderWeek(button) {
+            button.closest(".week").remove();
+        }
+
+        function verwijderLegeWeken() {
             document.querySelectorAll(".week").forEach(week => {
-                week.classList.add("statisch");
+                const weekTitel = week.querySelector(".week-title").innerText;
+                if (weekTitel.includes("?")) {
+                    week.remove();
+                }
             });
         }
 
         function exporteerNaarPDF() {
-            bewaarAlleWeken();
+            verwijderLegeWeken();
 
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             let y = 10;
+            let pageCounter = 0;
 
             doc.setFontSize(18);
             doc.text("Unique Uren Calculator - Overzicht", 10, y);
             y += 10;
 
-            document.querySelectorAll(".week").forEach(week => {
+            document.querySelectorAll(".week").forEach((week, index) => {
+                if (index % 4 === 0 && index !== 0) {
+                    doc.addPage();
+                    y = 10;
+                    pageCounter++;
+                }
+
                 let weekTitel = week.querySelector(".week-title").innerText;
                 doc.setFontSize(14);
                 doc.text(weekTitel, 10, y);
@@ -157,45 +184,14 @@
                 y = doc.lastAutoTable.finalY + 10;
             });
 
-            doc.save("urenoverzicht.pdf");
-        }
-
-        function getWeeknummer(date) {
-            const d = new Date(date);
-            d.setHours(0, 0, 0, 0);
-            d.setDate(d.getDate() - (d.getDay() || 7) + 3);
-            const firstThursday = new Date(d.getFullYear(), 0, 4);
-            firstThursday.setDate(firstThursday.getDate() - (firstThursday.getDay() || 7) + 3);
-            const weekNum = Math.round(((d - firstThursday) / (7 * 24 * 60 * 60 * 1000)) + 1);
-            return `Week ${weekNum}, ${d.getFullYear()}`;
-        }
-
-        function updateWeeknummerEnDatums(input) {
-            const weekDiv = input.closest(".week");
-            const weekTitle = weekDiv.querySelector(".week-title");
-            const dateValue = input.value;
-            if (!dateValue) return;
-
-            let datum = new Date(dateValue);
-            if (datum.getDay() !== 1) {
-                alert('De gekozen datum is geen maandag. Kies een correcte maandag.');
-                input.value = "";
-                return;
-            }
-
-            weekTitle.innerText = getWeeknummer(dateValue);
-
-            weekDiv.querySelectorAll(".datum").forEach((datumInput, index) => {
-                let nieuweDatum = new Date(dateValue);
-                nieuweDatum.setDate(nieuweDatum.getDate() + index);
-                datumInput.value = nieuweDatum.toISOString().split('T')[0];
-            });
+            doc.output("dataurlnewwindow"); // Open PDF in nieuw venster
         }
 
         function voegWeekToe() {
             const weekDiv = document.createElement("div");
             weekDiv.classList.add("week");
             weekDiv.innerHTML = `
+                <button class="delete-btn" onclick="verwijderWeek(this)">Verwijder</button>
                 <h2 class="week-title">Week ?</h2>
                 <table>
                     <tr>
@@ -204,9 +200,7 @@
                     ${["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"].map((dag, index) => `
                         <tr>
                             <td>${dag}</td>
-                            <td><input type="date" class="datum ${index === 0 ? 'datum-maandag' : ''}" 
-                                       ${index === 0 ? 'required onchange="updateWeeknummerEnDatums(this)"' : 'disabled'}>
-                            </td>
+                            <td><input type="date" class="datum ${index === 0 ? 'datum-maandag' : ''}" ${index === 0 ? 'required' : 'disabled'}></td>
                             <td><input type="time" class="start" value="00:00"></td>
                             <td><input type="time" class="end" value="00:00"></td>
                             <td>

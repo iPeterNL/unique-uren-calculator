@@ -142,6 +142,26 @@
             });
         }
 
+        function updateEindtijd(input) {
+            const row = input.closest("tr");
+            const eindtijd = row.querySelector(".end");
+            eindtijd.value = input.value;
+            berekenUren(row);
+        }
+
+        function berekenUren(row) {
+            const start = row.querySelector(".start").value;
+            const end = row.querySelector(".end").value;
+            const pauze = row.querySelector(".pauze").value === "ja" ? 30 : 0;
+
+            if (start && end) {
+                let startTime = new Date(`2023-01-01T${start}:00`);
+                let endTime = new Date(`2023-01-01T${end}:00`);
+                let uren = (endTime - startTime) / (1000 * 60 * 60) - (pauze / 60);
+                row.querySelector(".result").innerText = uren.toFixed(2);
+            }
+        }
+
         function updateWeeknummerEnDatums(input) {
             const weekDiv = input.closest(".week");
             const weekTitle = weekDiv.querySelector(".week-title");
@@ -175,15 +195,14 @@
                     <tr>
                         <th>Dag</th> <th>Datum</th> <th>Begin</th> <th>Eind</th> <th>30 min maaltijd</th> <th>Gewerkt</th>
                     </tr>
-                    ${["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"].map((dag, index) => `
+                    ${["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"].map(dag => `
                         <tr>
                             <td>${dag}</td>
-                            <td><input type="date" class="datum ${index === 0 ? 'datum-maandag' : ''}" ${index === 0 ? 'required onchange="updateWeeknummerEnDatums(this)"' : 'disabled'}>
-                            </td>
-                            <td><input type="time" class="start" value="00:00"></td>
-                            <td><input type="time" class="end" value="00:00"></td>
+                            <td><input type="date" class="datum" disabled></td>
+                            <td><input type="time" class="start" value="00:00" onchange="updateEindtijd(this)"></td>
+                            <td><input type="time" class="end" value="00:00" onchange="berekenUren(this.closest('tr'))"></td>
                             <td>
-                                <select class="pauze">
+                                <select class="pauze" onchange="berekenUren(this.closest('tr'))">
                                     <option value="nee">Nee</option>
                                     <option value="ja">Ja</option>
                                 </select>
@@ -194,17 +213,6 @@
                 </table>
             `;
             document.getElementById("weken-container").appendChild(weekDiv);
-        }
-
-        function exporteerNaarPDF() {
-            verwijderLegeWeken();
-            alert("PDF wordt gegenereerd. Bekijk en print deze via het volgende scherm.");
-
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            doc.text("Unique Uren Calculator - Overzicht", 10, 10);
-            doc.autoTable({ html: "#weken-container" });
-            doc.output("dataurlnewwindow");
         }
 
         document.addEventListener("DOMContentLoaded", () => {

@@ -8,7 +8,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <style>
-        /* Algemene stijlen */
         body {
             font-family: "Verdana", sans-serif;
             text-align: center;
@@ -100,13 +99,6 @@
         .btn-primary:hover, .btn-secondary:hover, .btn-danger:hover {
             opacity: 0.9;
         }
-        .statisch input, .statisch select {
-            display: none;
-        }
-        .statisch .result {
-            font-weight: bold;
-            font-size: 16px;
-        }
         .delete-btn {
             position: absolute;
             top: 10px;
@@ -131,15 +123,6 @@
     <script>
         function verwijderWeek(button) {
             button.closest(".week").remove();
-        }
-
-        function verwijderLegeWeken() {
-            document.querySelectorAll(".week").forEach(week => {
-                const weekTitel = week.querySelector(".week-title").innerText;
-                if (weekTitel.includes("?")) {
-                    week.remove();
-                }
-            });
         }
 
         function updateEindtijd(input) {
@@ -183,6 +166,10 @@
                 datumInput.value = nieuweDatum.toISOString().split('T')[0];
                 datumInput.disabled = false; 
             });
+
+            weekDiv.querySelectorAll(".start, .end, .pauze").forEach(input => {
+                input.disabled = false; 
+            });
         }
 
         function voegWeekToe() {
@@ -198,11 +185,11 @@
                     ${["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"].map(dag => `
                         <tr>
                             <td>${dag}</td>
-                            <td><input type="date" class="datum" disabled></td>
-                            <td><input type="time" class="start" value="00:00" onchange="updateEindtijd(this)"></td>
-                            <td><input type="time" class="end" value="00:00" onchange="berekenUren(this.closest('tr'))"></td>
+                            <td><input type="date" class="datum" ${dag === "Ma" ? 'onchange="updateWeeknummerEnDatums(this)"' : 'disabled'}></td>
+                            <td><input type="time" class="start" value="00:00" onchange="updateEindtijd(this)" disabled></td>
+                            <td><input type="time" class="end" value="00:00" onchange="berekenUren(this.closest('tr'))" disabled></td>
                             <td>
-                                <select class="pauze" onchange="berekenUren(this.closest('tr'))">
+                                <select class="pauze" onchange="berekenUren(this.closest('tr'))" disabled>
                                     <option value="nee">Nee</option>
                                     <option value="ja">Ja</option>
                                 </select>

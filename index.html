@@ -143,6 +143,16 @@
                 let uren = (endTime - startTime) / (1000 * 60 * 60) - (pauze / 60);
                 row.querySelector(".result").innerText = uren.toFixed(2);
             }
+
+            updateTotaalUren(row.closest(".week"));
+        }
+
+        function updateTotaalUren(week) {
+            let totaal = 0;
+            week.querySelectorAll(".result").forEach(result => {
+                totaal += parseFloat(result.innerText) || 0;
+            });
+            week.querySelector(".week-totaal").innerText = totaal.toFixed(2);
         }
 
         function updateWeeknummerEnDatums(input) {
@@ -164,11 +174,10 @@
                 let nieuweDatum = new Date(dateValue);
                 nieuweDatum.setDate(nieuweDatum.getDate() + index);
                 datumInput.value = nieuweDatum.toISOString().split('T')[0];
-                datumInput.disabled = false; 
             });
 
             weekDiv.querySelectorAll(".start, .end, .pauze").forEach(input => {
-                input.disabled = false; 
+                input.disabled = false;
             });
         }
 
@@ -185,11 +194,11 @@
                     ${["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"].map(dag => `
                         <tr>
                             <td>${dag}</td>
-                            <td><input type="date" class="datum" ${dag === "Ma" ? 'onchange="updateWeeknummerEnDatums(this)"' : 'disabled'}></td>
-                            <td><input type="time" class="start" value="00:00" onchange="updateEindtijd(this)" disabled></td>
-                            <td><input type="time" class="end" value="00:00" onchange="berekenUren(this.closest('tr'))" disabled></td>
+                            <td><input type="date" class="datum" ${dag === "Ma" ? 'onchange="updateWeeknummerEnDatums(this)"' : 'readonly'}></td>
+                            <td><input type="time" class="start" value="00:00" onchange="updateEindtijd(this)"></td>
+                            <td><input type="time" class="end" value="00:00" onchange="berekenUren(this.closest('tr'))"></td>
                             <td>
-                                <select class="pauze" onchange="berekenUren(this.closest('tr'))" disabled>
+                                <select class="pauze" onchange="berekenUren(this.closest('tr'))">
                                     <option value="nee">Nee</option>
                                     <option value="ja">Ja</option>
                                 </select>
@@ -198,6 +207,7 @@
                         </tr>
                     `).join("")}
                 </table>
+                <p><strong>Totaal gewerkte uren: <span class="week-totaal">0.00</span></strong></p>
             `;
             document.getElementById("weken-container").appendChild(weekDiv);
         }

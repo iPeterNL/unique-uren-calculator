@@ -10,7 +10,7 @@
     <style>
         /* Algemene stijlen */
         body {
-            font-family: "Arial", sans-serif;
+            font-family: "Verdana", sans-serif;
             text-align: center;
             margin: 0;
             padding: 20px;
@@ -68,6 +68,7 @@
             border-radius: 5px;
             font-size: 14px;
             text-align: center;
+            font-family: "Verdana", sans-serif;
         }
         input:disabled {
             background: #e9ecef;
@@ -81,6 +82,7 @@
             font-size: 14px;
             cursor: pointer;
             transition: 0.3s;
+            font-family: "Verdana", sans-serif;
             margin-top: 8px;
         }
         .btn-primary {
@@ -140,51 +142,27 @@
             });
         }
 
-        function exporteerNaarPDF() {
-            verwijderLegeWeken();
+        function updateWeeknummerEnDatums(input) {
+            const weekDiv = input.closest(".week");
+            const weekTitle = weekDiv.querySelector(".week-title");
+            const dateValue = input.value;
+            if (!dateValue) return;
 
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            let y = 10;
-            let pageCounter = 0;
+            let datum = new Date(dateValue);
+            if (datum.getDay() !== 1) { 
+                alert('De gekozen datum is geen maandag. Kies een correcte maandag.');
+                input.value = "";
+                return;
+            }
 
-            doc.setFontSize(18);
-            doc.text("Unique Uren Calculator - Overzicht", 10, y);
-            y += 10;
+            weekTitle.innerText = `Week ${Math.ceil((datum.getDate() - 1) / 7)}, ${datum.getFullYear()}`;
 
-            document.querySelectorAll(".week").forEach((week, index) => {
-                if (index % 4 === 0 && index !== 0) {
-                    doc.addPage();
-                    y = 10;
-                    pageCounter++;
-                }
-
-                let weekTitel = week.querySelector(".week-title").innerText;
-                doc.setFontSize(14);
-                doc.text(weekTitel, 10, y);
-                y += 6;
-
-                let tableData = [];
-                week.querySelectorAll("tr").forEach(row => {
-                    let rowData = [];
-                    row.querySelectorAll("td, th").forEach(cell => {
-                        rowData.push(cell.innerText);
-                    });
-                    tableData.push(rowData);
-                });
-
-                doc.autoTable({
-                    startY: y,
-                    head: [tableData[0]],
-                    body: tableData.slice(1),
-                    theme: 'grid',
-                    styles: { fontSize: 10 }
-                });
-
-                y = doc.lastAutoTable.finalY + 10;
+            weekDiv.querySelectorAll(".datum").forEach((datumInput, index) => {
+                let nieuweDatum = new Date(dateValue);
+                nieuweDatum.setDate(nieuweDatum.getDate() + index);
+                datumInput.value = nieuweDatum.toISOString().split('T')[0];
+                datumInput.disabled = false; 
             });
-
-            doc.output("dataurlnewwindow"); // Open PDF in nieuw venster
         }
 
         function voegWeekToe() {
@@ -200,7 +178,8 @@
                     ${["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"].map((dag, index) => `
                         <tr>
                             <td>${dag}</td>
-                            <td><input type="date" class="datum ${index === 0 ? 'datum-maandag' : ''}" ${index === 0 ? 'required' : 'disabled'}></td>
+                            <td><input type="date" class="datum ${index === 0 ? 'datum-maandag' : ''}" ${index === 0 ? 'required onchange="updateWeeknummerEnDatums(this)"' : 'disabled'}>
+                            </td>
                             <td><input type="time" class="start" value="00:00"></td>
                             <td><input type="time" class="end" value="00:00"></td>
                             <td>
@@ -215,6 +194,17 @@
                 </table>
             `;
             document.getElementById("weken-container").appendChild(weekDiv);
+        }
+
+        function exporteerNaarPDF() {
+            verwijderLegeWeken();
+            alert("PDF wordt gegenereerd. Bekijk en print deze via het volgende scherm.");
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.text("Unique Uren Calculator - Overzicht", 10, 10);
+            doc.autoTable({ html: "#weken-container" });
+            doc.output("dataurlnewwindow");
         }
 
         document.addEventListener("DOMContentLoaded", () => {

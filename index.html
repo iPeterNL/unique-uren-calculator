@@ -150,6 +150,9 @@
                 let nieuweDatum = new Date(dateValue);
                 nieuweDatum.setDate(nieuweDatum.getDate() + index);
                 datumInput.value = nieuweDatum.toISOString().split('T')[0];
+                if (index > 0) {
+                    datumInput.disabled = true;
+                }
             });
         }
 
@@ -166,10 +169,10 @@
                     <tr>
                         <th>Dag</th> <th>Datum</th> <th>Begin</th> <th>Eind</th> <th>30 min maaltijd</th> <th>Gewerkt</th>
                     </tr>
-                    ${["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"].map(dag => `
+                    ${["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"].map((dag, index) => `
                         <tr>
                             <td>${dag}</td>
-                            <td><input type="date" class="datum" ${dag === "Ma" ? 'onchange="updateWeeknummerEnDatums(this)"' : 'readonly'}></td>
+                            <td><input type="date" class="datum" ${index === 0 ? 'onchange="updateWeeknummerEnDatums(this)"' : 'disabled style="background-color:#e9ecef;color:#6c757d;cursor:not-allowed;"'}></td>
                             <td><input type="time" class="start" value="00:00"></td>
                             <td><input type="time" class="end" value="00:00"></td>
                             <td>
@@ -182,7 +185,6 @@
                         </tr>
                     `).join("")}
                 </table>
-                <p><strong>Totaal gewerkte uren: <span class="week-totaal">0.00</span></strong></p>
             `;
             document.getElementById("weken-container").appendChild(weekDiv);
         }

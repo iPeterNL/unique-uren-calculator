@@ -157,11 +157,11 @@
         }
 
         function voegWeekToe() {
+            let weekDiv = document.createElement("div");
+            weekDiv.classList.add("week");
             let weekCount = document.querySelectorAll(".week").length + 1;
             let deleteButton = weekCount === 1 ? `<button class="btn-danger" onclick="resetWeek(this)">Invoer Wissen</button>` : `<button class="delete-btn" onclick="verwijderWeek(this)">Verwijder</button>`;
 
-            const weekDiv = document.createElement("div");
-            weekDiv.classList.add("week");
             weekDiv.innerHTML = `
                 ${deleteButton}
                 <h2 class="week-title">Week ?</h2>
@@ -175,12 +175,7 @@
                             <td><input type="date" class="datum" ${index === 0 ? 'onchange="updateWeeknummerEnDatums(this)"' : 'disabled style="background-color:#e9ecef;color:#6c757d;cursor:not-allowed;"'}></td>
                             <td><input type="time" class="start" value="00:00"></td>
                             <td><input type="time" class="end" value="00:00"></td>
-                            <td>
-                                <select class="pauze">
-                                    <option value="nee">Nee</option>
-                                    <option value="ja">Ja</option>
-                                </select>
-                            </td>
+                            <td><select class="pauze"><option value="nee">Nee</option><option value="ja">Ja</option></select></td>
                             <td><span class="result">0.00</span></td>
                         </tr>
                     `).join("")}
@@ -189,9 +184,7 @@
             document.getElementById("weken-container").appendChild(weekDiv);
         }
 
-        document.addEventListener("DOMContentLoaded", () => {
-            voegWeekToe();
-        });
+        document.addEventListener("DOMContentLoaded", () => voegWeekToe());
     </script>
 </body>
 </html>

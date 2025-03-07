@@ -121,38 +121,13 @@
     </div>
 
     <script>
-        function verwijderWeek(button) {
-            button.closest(".week").remove();
-        }
-
-        function updateEindtijd(input) {
-            const row = input.closest("tr");
-            const eindtijd = row.querySelector(".end");
-            eindtijd.value = input.value;
-            berekenUren(row);
-        }
-
-        function berekenUren(row) {
-            const start = row.querySelector(".start").value;
-            const end = row.querySelector(".end").value;
-            const pauze = row.querySelector(".pauze").value === "ja" ? 30 : 0;
-
-            if (start && end) {
-                let startTime = new Date(`2023-01-01T${start}:00`);
-                let endTime = new Date(`2023-01-01T${end}:00`);
-                let uren = (endTime - startTime) / (1000 * 60 * 60) - (pauze / 60);
-                row.querySelector(".result").innerText = uren.toFixed(2);
-            }
-
-            updateTotaalUren(row.closest(".week"));
-        }
-
-        function updateTotaalUren(week) {
-            let totaal = 0;
-            week.querySelectorAll(".result").forEach(result => {
-                totaal += parseFloat(result.innerText) || 0;
-            });
-            week.querySelector(".week-totaal").innerText = totaal.toFixed(2);
+        function getISOWeekNumber(d) {
+            d = new Date(d);
+            d.setHours(0, 0, 0, 0);
+            d.setDate(d.getDate() + 3 - (d.getDay() || 7));
+            let firstThursday = new Date(d.getFullYear(), 0, 4);
+            firstThursday.setDate(firstThursday.getDate() + 3 - (firstThursday.getDay() || 7));
+            return 1 + Math.round(((d - firstThursday) / 86400000 - 3) / 7);
         }
 
         function updateWeeknummerEnDatums(input) {
@@ -168,24 +143,24 @@
                 return;
             }
 
-            weekTitle.innerText = `Week ${Math.ceil((datum.getDate() - 1) / 7)}, ${datum.getFullYear()}`;
+            let weekNummer = getISOWeekNumber(datum);
+            weekTitle.innerText = `Week ${weekNummer}, ${datum.getFullYear()}`;
 
             weekDiv.querySelectorAll(".datum").forEach((datumInput, index) => {
                 let nieuweDatum = new Date(dateValue);
                 nieuweDatum.setDate(nieuweDatum.getDate() + index);
                 datumInput.value = nieuweDatum.toISOString().split('T')[0];
             });
-
-            weekDiv.querySelectorAll(".start, .end, .pauze").forEach(input => {
-                input.disabled = false;
-            });
         }
 
         function voegWeekToe() {
+            let weekCount = document.querySelectorAll(".week").length + 1;
+            let deleteButton = weekCount === 1 ? `<button class="btn-danger" onclick="resetWeek(this)">Invoer Wissen</button>` : `<button class="delete-btn" onclick="verwijderWeek(this)">Verwijder</button>`;
+
             const weekDiv = document.createElement("div");
             weekDiv.classList.add("week");
             weekDiv.innerHTML = `
-                <button class="delete-btn" onclick="verwijderWeek(this)">Verwijder</button>
+                ${deleteButton}
                 <h2 class="week-title">Week ?</h2>
                 <table>
                     <tr>
@@ -195,10 +170,10 @@
                         <tr>
                             <td>${dag}</td>
                             <td><input type="date" class="datum" ${dag === "Ma" ? 'onchange="updateWeeknummerEnDatums(this)"' : 'readonly'}></td>
-                            <td><input type="time" class="start" value="00:00" onchange="updateEindtijd(this)"></td>
-                            <td><input type="time" class="end" value="00:00" onchange="berekenUren(this.closest('tr'))"></td>
+                            <td><input type="time" class="start" value="00:00"></td>
+                            <td><input type="time" class="end" value="00:00"></td>
                             <td>
-                                <select class="pauze" onchange="berekenUren(this.closest('tr'))">
+                                <select class="pauze">
                                     <option value="nee">Nee</option>
                                     <option value="ja">Ja</option>
                                 </select>

@@ -130,30 +130,49 @@
             return 1 + Math.round(((d - firstThursday) / 86400000 - 3) / 7);
         }
 
-        function updateWeeknummerEnDatums(input) {
-            const weekDiv = input.closest(".week");
-            const weekTitle = weekDiv.querySelector(".week-title");
-            const dateValue = input.value;
-            if (!dateValue) return;
+        function exporteerNaarPDF() {
+            const { jsPDF } = window.jspdf;
+            let doc = new jsPDF();
+            let y = 10;
+            let pageCount = 0;
 
-            let datum = new Date(dateValue);
-            if (datum.getDay() !== 1) { 
-                alert('De gekozen datum is geen maandag. Kies een correcte maandag.');
-                input.value = "";
-                return;
-            }
+            doc.setFontSize(18);
+            doc.text("Unique Uren Calculator - Overzicht", 10, y);
+            y += 10;
 
-            let weekNummer = getISOWeekNumber(datum);
-            weekTitle.innerText = `Week ${weekNummer}, ${datum.getFullYear()}`;
-
-            weekDiv.querySelectorAll(".datum").forEach((datumInput, index) => {
-                let nieuweDatum = new Date(dateValue);
-                nieuweDatum.setDate(nieuweDatum.getDate() + index);
-                datumInput.value = nieuweDatum.toISOString().split('T')[0];
-                if (index > 0) {
-                    datumInput.disabled = true;
+            document.querySelectorAll(".week").forEach((week, index) => {
+                if (index % 4 === 0 && index !== 0) {
+                    doc.addPage();
+                    y = 10;
+                    pageCount++;
                 }
+
+                let weekTitel = week.querySelector(".week-title").innerText;
+                doc.setFontSize(14);
+                doc.text(weekTitel, 10, y);
+                y += 6;
+
+                let tableData = [];
+                week.querySelectorAll("tr").forEach(row => {
+                    let rowData = [];
+                    row.querySelectorAll("td, th").forEach(cell => {
+                        rowData.push(cell.innerText);
+                    });
+                    tableData.push(rowData);
+                });
+
+                doc.autoTable({
+                    startY: y,
+                    head: [tableData[0]],
+                    body: tableData.slice(1),
+                    theme: 'grid',
+                    styles: { fontSize: 10 }
+                });
+
+                y = doc.lastAutoTable.finalY + 10;
             });
+
+            doc.output("dataurlnewwindow");
         }
 
         function voegWeekToe() {

@@ -24,7 +24,6 @@
             padding: 25px;
             border-radius: 10px;
             box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
         }
         h1 {
             color: #007bff;
@@ -37,7 +36,6 @@
             border-radius: 10px;
             background: #ffffff;
             box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
-            text-align: left;
             position: relative;
         }
         .week h2 {
@@ -88,15 +86,11 @@
             background: #007bff;
             color: white;
         }
-        .btn-secondary {
-            background: #28a745;
-            color: white;
-        }
         .btn-danger {
             background: #dc3545;
             color: white;
         }
-        .btn-primary:hover, .btn-secondary:hover, .btn-danger:hover {
+        .btn-primary:hover, .btn-danger:hover {
             opacity: 0.9;
         }
         .delete-btn {
@@ -134,7 +128,6 @@
             const { jsPDF } = window.jspdf;
             let doc = new jsPDF();
             let y = 10;
-            let pageCount = 0;
 
             doc.setFontSize(18);
             doc.text("Unique Uren Calculator - Overzicht", 10, y);
@@ -144,7 +137,6 @@
                 if (index % 4 === 0 && index !== 0) {
                     doc.addPage();
                     y = 10;
-                    pageCount++;
                 }
 
                 let weekTitel = week.querySelector(".week-title").innerText;

@@ -1,82 +1,201 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { jsPDF } from "jspdf";
-
-export default function UniqueUrenCalculator() {
-  const [weeks, setWeeks] = useState([{ id: 1, days: generateWeek() }]);
-
-  function generateWeek(startMonday = new Date()) {
-    let monday = new Date(startMonday);
-    monday.setDate(monday.getDate() - monday.getDay() + 1);
-    return Array.from({ length: 7 }, (_, i) => {
-      let day = new Date(monday);
-      day.setDate(monday.getDate() + i);
-      return { date: day.toLocaleDateString("nl-NL"), start: "", end: "", break: false, total: "0:00" };
-    });
-  }
-
-  function calculateHours(day) {
-    if (!day.start || !day.end) return "0:00";
-    let start = new Date(`1970-01-01T${day.start}:00`);
-    let end = new Date(`1970-01-01T${day.end}:00`);
-    let diff = (end - start) / (1000 * 60);
-    if (day.break) diff -= 30;
-    let hours = Math.floor(diff / 60);
-    let minutes = diff % 60;
-    return `${hours}:${minutes < 10 ? "0" : ""}${minutes}`;
-  }
-
-  function updateDay(weekIndex, dayIndex, field, value) {
-    let newWeeks = [...weeks];
-    let day = newWeeks[weekIndex].days[dayIndex];
-    day[field] = value;
-    day.total = calculateHours(day);
-    setWeeks(newWeeks);
-  }
-
-  function addWeek() {
-    setWeeks([...weeks, { id: weeks.length + 1, days: generateWeek() }]);
-  }
-
-  function removeWeek(index) {
-    if (weeks.length > 1) {
-      setWeeks(weeks.filter((_, i) => i !== index));
-    }
-  }
-
-  function exportToPDF() {
-    const doc = new jsPDF();
-    weeks.forEach((week, index) => {
-      doc.text(`Week ${index + 1}`, 10, 10 + index * 20);
-      week.days.forEach((day, i) => {
-        doc.text(`${day.date}: ${day.start} - ${day.end} (${day.break ? "met pauze" : "geen pauze"})`, 10, 20 + i * 10 + index * 20);
-      });
-    });
-    doc.save("urenregistratie.pdf");
-  }
-
-  return (
-    <div className="p-4">
-      {weeks.map((week, wIndex) => (
-        <Card key={week.id} className="mb-4">
-          <CardContent>
-            <h2 className="text-lg font-bold">Week {wIndex + 1}</h2>
-            {week.days.map((day, dIndex) => (
-              <div key={dIndex} className="flex gap-2 items-center mt-2">
-                <span className="w-24">{day.date}</span>
-                <input type="time" value={day.start} onChange={(e) => updateDay(wIndex, dIndex, "start", e.target.value)} className="border p-1" />
-                <input type="time" value={day.end} onChange={(e) => updateDay(wIndex, dIndex, "end", e.target.value)} className="border p-1" />
-                <input type="checkbox" checked={day.break} onChange={(e) => updateDay(wIndex, dIndex, "break", e.target.checked)} />
-                <span>{day.total} uur</span>
-              </div>
-            ))}
-            <Button onClick={() => removeWeek(wIndex)} disabled={weeks.length === 1} className="mt-2">Verwijder</Button>
-          </CardContent>
-        </Card>
-      ))}
-      <Button onClick={addWeek} className="mr-2">+ Voeg Week Toe</Button>
-      <Button onClick={exportToPDF}>Exporteer als PDF</Button>
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#007bff">
+    <title>Unique Uren Calculator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        body {
+            font-family: "Verdana", sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+            color: #333;
+            font-size: 15px;
+        }
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #007bff;
+            margin-bottom: 15px;
+            font-size: 21px;
+        }
+        .week {
+            margin-top: 20px;
+            padding: 18px;
+            border-radius: 10px;
+            background: #ffffff;
+            box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        .week h2 {
+            margin-bottom: 10px;
+            color: #007bff;
+            font-size: 18px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+        th {
+            background: #007bff;
+            color: white;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            text-align: center;
+            font-family: "Verdana", sans-serif;
+        }
+        input:disabled {
+            background: #e9ecef;
+            color: #6c757d;
+            cursor: not-allowed;
+        }
+        button {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: 0.3s;
+            font-family: "Verdana", sans-serif;
+            margin-top: 8px;
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        .btn-primary:hover, .btn-danger:hover {
+            opacity: 0.9;
+        }
+        .delete-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #dc3545;
+            color: white;
+            padding: 5px 10px;
+            font-size: 12px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Unique Uren Calculator</h1>
+        <div id="weken-container"></div>
+        <button class="btn-primary" onclick="voegWeekToe()">+ Voeg Week Toe</button>
+        <button class="btn-danger" onclick="exporteerNaarPDF()">Exporteer naar PDF</button>
     </div>
-  );
-}
+
+    <script>
+        function getISOWeekNumber(d) {
+            d = new Date(d);
+            d.setHours(0, 0, 0, 0);
+            d.setDate(d.getDate() + 3 - (d.getDay() || 7));
+            let firstThursday = new Date(d.getFullYear(), 0, 4);
+            firstThursday.setDate(firstThursday.getDate() + 3 - (firstThursday.getDay() || 7));
+            return 1 + Math.round(((d - firstThursday) / 86400000 - 3) / 7);
+        }
+
+        function exporteerNaarPDF() {
+            const { jsPDF } = window.jspdf;
+            let doc = new jsPDF();
+            let y = 10;
+
+            doc.setFontSize(18);
+            doc.text("Unique Uren Calculator - Overzicht", 10, y);
+            y += 10;
+
+            document.querySelectorAll(".week").forEach((week, index) => {
+                if (index % 4 === 0 && index !== 0) {
+                    doc.addPage();
+                    y = 10;
+                }
+
+                let weekTitel = week.querySelector(".week-title").innerText;
+                doc.setFontSize(14);
+                doc.text(weekTitel, 10, y);
+                y += 6;
+
+                let tableData = [];
+                week.querySelectorAll("tr").forEach(row => {
+                    let rowData = [];
+                    row.querySelectorAll("td, th").forEach(cell => {
+                        rowData.push(cell.innerText);
+                    });
+                    tableData.push(rowData);
+                });
+
+                doc.autoTable({
+                    startY: y,
+                    head: [tableData[0]],
+                    body: tableData.slice(1),
+                    theme: 'grid',
+                    styles: { fontSize: 10 }
+                });
+
+                y = doc.lastAutoTable.finalY + 10;
+            });
+
+            doc.output("dataurlnewwindow");
+        }
+
+        function voegWeekToe() {
+            let weekDiv = document.createElement("div");
+            weekDiv.classList.add("week");
+            let weekCount = document.querySelectorAll(".week").length + 1;
+            let deleteButton = weekCount === 1 ? `<button class="btn-danger" onclick="resetWeek(this)">Invoer Wissen</button>` : `<button class="delete-btn" onclick="verwijderWeek(this)">Verwijder</button>`;
+
+            weekDiv.innerHTML = `
+                ${deleteButton}
+                <h2 class="week-title">Week ?</h2>
+                <table>
+                    <tr>
+                        <th>Dag</th> <th>Datum</th> <th>Begin</th> <th>Eind</th> <th>30 min maaltijd</th> <th>Gewerkt</th>
+                    </tr>
+                    ${["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"].map((dag, index) => `
+                        <tr>
+                            <td>${dag}</td>
+                            <td><input type="date" class="datum" ${index === 0 ? 'onchange="updateWeeknummerEnDatums(this)"' : 'disabled style="background-color:#e9ecef;color:#6c757d;cursor:not-allowed;"'}></td>
+                            <td><input type="time" class="start" value="00:00"></td>
+                            <td><input type="time" class="end" value="00:00"></td>
+                            <td><select class="pauze"><option value="nee">Nee</option><option value="ja">Ja</option></select></td>
+                            <td><span class="result">0.00</span></td>
+                        </tr>
+                    `).join("")}
+                </table>
+            `;
+            document.getElementById("weken-container").appendChild(weekDiv);
+        }
+
+        document.addEventListener("DOMContentLoaded", () => voegWeekToe());
+    </script>
+</body>
+</html>
